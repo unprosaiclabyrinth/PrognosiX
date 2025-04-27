@@ -5,20 +5,24 @@
 
 ```bash
 conda env create -f environment.yml
+```
 
 ### If you already have the `prognosix-ds` environment
 
 ```bash
 conda activate prognosix-ds
 conda env update -f environment.yml --prune
+```
 
 
 # start both the backend (Voilà) and the React dev server
 
 ```bash
 ./start.sh
+```
 
 # to go out of the conda enviroment
 
 ```bash
 conda deactivate
+```

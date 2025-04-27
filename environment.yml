@@ -1,0 +1,18 @@
+name: prognosix-ds
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - voila
+  - notebook
+  - pandas
+  - seaborn
+  - matplotlib
+  - scikit-learn
+  - py-xgboost
+  - shap
+  - altair
+  - vega_datasets
+  - graphviz
+  - python-graphviz
+  # add/remove as you import new packages

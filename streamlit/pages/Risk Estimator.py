@@ -100,16 +100,12 @@ gauge = base.mark_arc(innerRadius=100, outerRadius=130).encode(
     color=alt.Color('risk:Q', scale=alt.Scale(domain=[0,1], scheme='redyellowgreen', reverse=True))
 ).properties(width=300, height=300)
 
-text = base.mark_text(size=60, align='center', baseline='middle').encode(
+text = base.mark_text(font='Courier New', fontWeight='bold', size=60, align='center', baseline='middle').encode(
     text=alt.Text('risk:Q', format='.1%'),
-    color= alt.condition(
-        alt.datum.risk > 0.5,
-        alt.value('red'),
-        alt.value('green')
-    )
+    color=alt.Color('risk:Q', scale=alt.Scale(domain=[0,1], scheme='redyellowgreen', reverse=True))
 ).properties(width=300, height=300)
 
-chart = (gauge + text).add_params(*params).resolve_scale(color='independent')
+chart = (gauge + text).add_params(*params)
 
 #69.0,80.0,1.02,3.0,0.0,abnormal,normal,notpresent,notpresent,148.0365168539326,103.0,4.1,132.0,5.9,12.5,38.88449848024316,8406.122448979591,4.707434944237917,yes,no,no,good,no,no,ckd
 st.altair_chart(chart, use_container_width=True)

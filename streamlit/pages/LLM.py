@@ -244,7 +244,20 @@ if 'user_prompt' not in st.session_state:
     st.session_state.user_prompt = ''
 if 'user_files' not in st.session_state:
     st.session_state.user_files = []
+if 'expanded' not in st.session_state:
+    st.session_state.expanded = True
 
+def toggle_expanded():
+    st.session_state.expanded = False
+
+with st.expander('Example prompt', expanded=st.session_state.expanded):
+    if st.button('Try this example', on_click=toggle_expanded):
+        st.session_state.user_prompt = 'I\'m 43 years old, and my recent blood tests showed a specific gravity of 1.010. I have been feeling quite fatigued, and my doctor mentioned I might have anemia. My blood pressure is high, and I have a poor appetite.'
+        st.session_state.user_files = ['notebooks/llm_src/example_cmp.png','notebooks/llm_src/example_cbc_2.png']
+        st.session_state.submitted = True
+        st.session_state.messages.append({'role': 'user', 'content': st.session_state.user_prompt + '\nFiles uploaded.'})
+    st.write('I\'m 43 years old, and my recent urine tests showed a specific gravity of 1.010. I have been feeling quite fatigued, and my doctor mentioned I might have anemia. My blood pressure is high, and I have a poor appetite.')
+    st.image(['notebooks/llm_src/example_cmp.png','notebooks/llm_src/example_cbc_2.png'], use_container_width=True)
 
 prompt = st.text_input('Enter your health information:', placeholder='I am XX years old...')
 
@@ -275,26 +288,44 @@ if st.session_state.submitted:
             text = get_pairs_text(prompt)
             dfs.append(response_to_df(text))
         if uploaded_files:
-            for file in uploaded_files:
-                with open(os.getcwd()+'/streamlit/files/'+file.name, 'wb') as f:
-                    f.write(file.getbuffer())
-                    
-            for file in glob.glob(os.getcwd()+'/streamlit/files/*'):
-                text = get_pairs_image(file)
-                dfs.append(response_to_df(text))
-        
-            for file in glob.glob(os.getcwd()+'/streamlit/files/*'):
-                os.remove(file)
+            try:
+                if type(uploaded_files[0]) == str:
+                    for file in uploaded_files:
+                        text = get_pairs_image(file)
+                        dfs.append(response_to_df(text))
+                else:
+                    for file in uploaded_files:
+                        with open(os.getcwd()+'/streamlit/files/'+file.name, 'wb') as f:
+                            f.write(file.getbuffer())
+                            
+                    for file in glob.glob(os.getcwd()+'/streamlit/files/*'):
+                        text = get_pairs_image(file)
+                        dfs.append(response_to_df(text))
+                
+                    for file in glob.glob(os.getcwd()+'/streamlit/files/*'):
+                        os.remove(file)
+            except Exception as e:
+                st.session_state.messages.append({'role': 'assistant', 'content': 'Ran out of LLM calls. Please try again tomorrow.'})
+                st.session_state.submitted = False
+                st.rerun()
 
         try:
             all_df = pd.concat(dfs, ignore_index=True)
             result_row = all_df.bfill(axis=0).iloc[0]
             multi_test_df.loc[0] = result_row
+            
+            nan_counts = multi_test_df.isna().sum(axis=1)
+            if nan_counts > 19:
+                st.session_state.messages.append({'role': 'assistant', 'content': 'You did not input enough information for us to predict whether you have Chronic Kidney Disease. Please try again.'})
+                st.session_state.submitted = False
+                st.rerun()
+
             imputed_df = impute_values(multi_test_df, ckd_df)
         except:
             st.session_state.messages.append({'role': 'assistant', 'content': 'You did not input enough information for us to predict whether you have Chronic Kidney Disease. Please try again.'})
             st.session_state.submitted = False
             st.rerun()
+
 
         label_encoder = LabelEncoder()
 
@@ -324,6 +355,6 @@ if st.button('Submit'):
         elif uploaded_files and not prompt:
             st.session_state.messages.append({'role': 'user', 'content': 'You uploaded files.'})
         elif prompt and uploaded_files:
-            st.session_state.messages.append({'role': 'user', 'content': prompt + ' (and uploaded files)'})
+            st.session_state.messages.append({'role': 'user', 'content': prompt + + '\nFiles uploaded.'})
 
         st.rerun()

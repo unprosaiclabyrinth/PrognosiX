@@ -368,5 +368,26 @@ if st.session_state.submitted:
 
         st.session_state.messages.append({'role': 'assistant', 'content': response})
         st.session_state.submitted = False
+<<<<<<< HEAD:streamlit/pages/CKD Predictor.py
         st.toast('Response finished generating.', icon='🫘')
         st.rerun()
+=======
+        st.rerun()
+
+if st.button('Submit'):
+    if not prompt and not uploaded_files:
+        st.write('Please input your health information')
+    else:
+        st.session_state.user_prompt = prompt
+        st.session_state.user_files = uploaded_files
+        st.session_state.submitted = True
+
+        if prompt and not uploaded_files:
+            st.session_state.messages.append({'role': 'user', 'content': prompt})
+        elif uploaded_files and not prompt:
+            st.session_state.messages.append({'role': 'user', 'content': 'You uploaded files.'})
+        elif prompt and uploaded_files:
+            st.session_state.messages.append({'role': 'user', 'content': prompt + + '\nFiles uploaded.'})
+
+        st.rerun()
+>>>>>>> 911f25a (Add newline @ EOF):streamlit/pages/LLM.py

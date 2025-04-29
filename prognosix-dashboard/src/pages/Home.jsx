@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <section className="max-w-2xl mx-auto mt-24 px-6">
       <h1 className="text-3xl font-bold mb-6 text-slate-800">
-        Welcome to Prognosix
+        Welcome to PrognosiX
       </h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">

@@ -30,4 +30,9 @@ export default [
     label: "ML 4",
     src: "http://localhost:8866/voila/render/ML4.ipynb?",
   },
+  {
+    path: "/ml5",
+    label: "ML 5",
+    src: "http://localhost:8866/voila/render/ML5.ipynb?",
+  },
 ];

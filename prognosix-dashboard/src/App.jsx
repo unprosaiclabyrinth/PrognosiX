@@ -38,6 +38,11 @@ const notebooks = [
     path: "/ml4",
     src: "http://localhost:8866/voila/render/ML4.ipynb",
   },
+  {
+    label: "ML Analysis 5",
+    path: "/ml5",
+    src: "http://localhost:8866/voila/render/ML5.ipynb",
+  },
 ];
 
 /* ------------------------------------------------------------------ */

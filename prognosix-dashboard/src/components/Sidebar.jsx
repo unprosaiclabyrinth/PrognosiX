@@ -31,6 +31,7 @@ const mlChildren = [
   { label: "ML Analysis 2", path: "/ml2" },
   { label: "ML Analysis 3", path: "/ml3" },
   { label: "ML Analysis 4", path: "/ml4" },
+  { label: "ML Analysis 5", path: "/ml5" },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -47,15 +48,15 @@ export default function Sidebar() {
   }, [pathname]);
 
   return (
-    <aside className="flex flex-col w-64 h-screen bg-slate-100 border-r">
+    <aside className="flex flex-col w-64 h-screen overflow-y-hidden bg-slate-100 border-r">
       {/* Logo / header */}
       <div className="px-6 py-5 text-3xl font-extrabold tracking-wide">
         <span className="text-teal-600">Progno</span>
-        <span className="text-pink-600">six</span>
+        <span className="text-pink-600">siX</span>
       </div>
 
       {/* Primary links */}
-      <nav className="flex-1 px-3 space-y-1">
+      <nav className="flex-1 px-3 space-y-1 overflow-y-auto overscroll-contain">
         {primaryRoutes.map(({ label, path, icon }) => (
           <SidebarLink key={path} to={path} icon={icon} label={label} />
         ))}

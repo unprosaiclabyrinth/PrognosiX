@@ -15,4 +15,6 @@ dependencies:
   - vega_datasets
   - graphviz
   - python-graphviz
-  # add/remove as you import new packages
+  - pip
+  - pip:
+    - streamlit

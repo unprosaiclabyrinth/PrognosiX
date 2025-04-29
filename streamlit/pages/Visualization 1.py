@@ -2,6 +2,7 @@ import streamlit as st
 import altair as alt
 import pandas as pd
 
+st.set_page_config(page_title='Visualization 1', page_icon='📊', layout='wide')
 st.title('📊 Visualization 1')
 
 df = pd.read_csv('notebooks/ckd_preprocessed.csv')

@@ -1,6 +1,7 @@
 import streamlit as st
 
-st.title('PrognosiX')
+st.set_page_config(page_title='PrognosiX', page_icon='🏠', layout='wide')
+st.title('🏠 PrognosiX')
 
 st.write('Welcome to the PrognosiX dashboard.')
 

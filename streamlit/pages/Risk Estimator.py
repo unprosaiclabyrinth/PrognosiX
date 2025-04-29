@@ -5,8 +5,11 @@ import math
 from joblib import load
 from sklearn.preprocessing import LabelEncoder
 
+st.set_page_config(page_title='Risk Estimator', page_icon='🔍', layout='wide')
+st.title('🔍 Risk Estimator')
+
 df = pd.read_csv('notebooks/ckd_preprocessed.csv')
-model = load('notebooks/ckd_model.joblib')
+model = load('notebooks/risk_estimator/ckd_model.joblib')
 features = ['age','bp','sg','al','su','rbc','pc','pcc','ba','bgr','bu','sc','sod','pot','hemo','pcv','wc','rc','htn','dm','cad','appet','pe','ane']
 
 cat_features = ['rbc','pc','pcc','ba','htn','dm','cad','appet','pe','ane']

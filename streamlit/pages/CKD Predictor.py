@@ -237,7 +237,6 @@ expected_cols = [
 
 if 'messages' not in st.session_state:
     st.session_state.messages = []
-
 if 'submitted' not in st.session_state:
     st.session_state.submitted = False
 if 'user_prompt' not in st.session_state:
@@ -246,20 +245,36 @@ if 'user_files' not in st.session_state:
     st.session_state.user_files = []
 if 'expanded' not in st.session_state:
     st.session_state.expanded = True
+if 'expander_open' not in st.session_state:
+    st.session_state.expander_open = True
+if 'disable_button' not in st.session_state:
+    st.session_state.disable_buttons = False
 
-def toggle_expanded():
-    st.session_state.expanded = False
+def toggle_expander():
+    st.session_state.expander_open = not st.session_state.expander_open
 
-with st.expander('Example prompt', expanded=st.session_state.expanded):
-    if st.button('Try this example', on_click=toggle_expanded):
+def toggle_button():
+    st.session_state.disable_buttons = not st.session_state.disable_buttons
+
+disabled = st.session_state.disable_buttons
+
+st.set_page_config(page_title='CKD Predictor', page_icon='⚙️', layout='wide')
+st.title('⚙️ CKD Predictor')
+
+with st.expander('Example prompt'):
+    if st.button('Try this example', disabled=disabled):
+        toggle_button()
+        toggle_expander()
         st.session_state.user_prompt = 'I\'m 43 years old, and my recent blood tests showed a specific gravity of 1.010. I have been feeling quite fatigued, and my doctor mentioned I might have anemia. My blood pressure is high, and I have a poor appetite.'
         st.session_state.user_files = ['notebooks/llm_src/example_cmp.png','notebooks/llm_src/example_cbc_2.png']
         st.session_state.submitted = True
-        st.session_state.messages.append({'role': 'user', 'content': st.session_state.user_prompt + '\nFiles uploaded.'})
+        st.session_state.messages.append({'role': 'user', 'content': st.session_state.user_prompt + '  \nFiles uploaded.'})
+        st.rerun()
+
     st.write('I\'m 43 years old, and my recent urine tests showed a specific gravity of 1.010. I have been feeling quite fatigued, and my doctor mentioned I might have anemia. My blood pressure is high, and I have a poor appetite.')
     st.image(['notebooks/llm_src/example_cmp.png','notebooks/llm_src/example_cbc_2.png'], use_container_width=True)
 
-prompt = st.text_input('Enter your health information:', placeholder='I am XX years old...')
+prompt = st.text_input('Enter your health conditions:', placeholder='I am XX years old...')
 
 uploaded_files = st.file_uploader(
     'Upload lab reports:',
@@ -267,7 +282,24 @@ uploaded_files = st.file_uploader(
     type=['txt', 'pdf', 'jpg', 'png']
 )
 
-model = load('notebooks/risk_estimator/ckd_model.joblib')
+if st.button('Submit', disabled=disabled):
+    if not prompt and not uploaded_files:
+        st.write('Please input your health conditions.')
+    else:
+        st.session_state.user_prompt = prompt
+        st.session_state.user_files = uploaded_files
+        st.session_state.submitted = True
+
+        if prompt and not uploaded_files:
+            st.session_state.messages.append({'role': 'user', 'content': prompt})
+        elif uploaded_files and not prompt:
+            st.session_state.messages.append({'role': 'user', 'content': 'You uploaded files.'})
+        elif prompt and uploaded_files:
+            st.session_state.messages.append({'role': 'user', 'content': prompt + '  \nFiles uploaded.'})
+
+        st.rerun()
+
+model = load('streamlit/random_forest_model.joblib')
 
 ckd_df = pd.read_csv('notebooks/ckd_preprocessed.csv')
 
@@ -283,12 +315,12 @@ if st.session_state.submitted:
 
         prompt = st.session_state.user_prompt
         uploaded_files = st.session_state.user_files
-        
-        if prompt:
-            text = get_pairs_text(prompt)
-            dfs.append(response_to_df(text))
-        if uploaded_files:
-            try:
+
+        try:   
+            if prompt:
+                text = get_pairs_text(prompt)
+                dfs.append(response_to_df(text))
+            if uploaded_files:
                 if type(uploaded_files[0]) == str:
                     for file in uploaded_files:
                         text = get_pairs_image(file)
@@ -304,57 +336,37 @@ if st.session_state.submitted:
                 
                     for file in glob.glob(os.getcwd()+'/streamlit/files/*'):
                         os.remove(file)
-            except Exception as e:
-                st.session_state.messages.append({'role': 'assistant', 'content': 'Ran out of LLM calls. Please try again tomorrow.'})
-                st.session_state.submitted = False
-                st.rerun()
+        except Exception as e:
+            st.session_state.messages.append({'role': 'assistant', 'content': 'Ran out of LLM calls. Please try again tomorrow.'})
+            st.session_state.submitted = False
+            st.rerun()
 
         try:
             all_df = pd.concat(dfs, ignore_index=True)
             result_row = all_df.bfill(axis=0).iloc[0]
             multi_test_df.loc[0] = result_row
-            
-            nan_counts = multi_test_df.isna().sum(axis=1)
-            if nan_counts > 19:
+
+            nan_counts = multi_test_df.isna().sum(axis=1).iloc[0]
+            if nan_counts > 19: # requires at least 5 health condition variables 
                 st.session_state.messages.append({'role': 'assistant', 'content': 'You did not input enough information for us to predict whether you have Chronic Kidney Disease. Please try again.'})
                 st.session_state.submitted = False
                 st.rerun()
-
-            imputed_df = impute_values(multi_test_df, ckd_df)
         except:
             st.session_state.messages.append({'role': 'assistant', 'content': 'You did not input enough information for us to predict whether you have Chronic Kidney Disease. Please try again.'})
             st.session_state.submitted = False
             st.rerun()
 
-
         label_encoder = LabelEncoder()
 
-        object_columns_list = imputed_df.select_dtypes(include=['object']).columns.tolist()
+        object_columns_list = multi_test_df.select_dtypes(include=['object']).columns.tolist()
 
         for object_column in object_columns_list:
-            imputed_df[object_column] = label_encoder.fit_transform(imputed_df[object_column])
-                
-        pred = model.predict([imputed_df.loc[0]])
+            multi_test_df[object_column] = label_encoder.fit_transform(multi_test_df[object_column])
+        pred = model.predict([multi_test_df.loc[0]])
 
         response = create_response(pred, multi_test_df)
 
         st.session_state.messages.append({'role': 'assistant', 'content': response})
         st.session_state.submitted = False
-        st.rerun()
-
-if st.button('Submit'):
-    if not prompt and not uploaded_files:
-        st.write('Please input your health information')
-    else:
-        st.session_state.user_prompt = prompt
-        st.session_state.user_files = uploaded_files
-        st.session_state.submitted = True
-
-        if prompt and not uploaded_files:
-            st.session_state.messages.append({'role': 'user', 'content': prompt})
-        elif uploaded_files and not prompt:
-            st.session_state.messages.append({'role': 'user', 'content': 'You uploaded files.'})
-        elif prompt and uploaded_files:
-            st.session_state.messages.append({'role': 'user', 'content': prompt + + '\nFiles uploaded.'})
-
+        st.toast('Response finished generating.', icon='🫘')
         st.rerun()

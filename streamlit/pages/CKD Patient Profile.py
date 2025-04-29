@@ -2,6 +2,7 @@ import streamlit as st
 import altair as alt
 import pandas as pd
 
+st.set_page_config(page_title='CKD Patient Profile', page_icon='📊', layout='wide')
 st.title('📊 CKD Patient Profile')
 
 df = pd.read_csv('notebooks/ckd_preprocessed.csv')
